@@ -1,0 +1,38 @@
+{
+  "name": "Starlog — jejak kebiasaan & catatan",
+  "short_name": "Starlog",
+  "description": "Lacak kebiasaan harianmu dan simpan catatan, tersimpan langsung ke repo GitHub-mu sendiri.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0D1D",
+  "theme_color": "#0B0D1D",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
