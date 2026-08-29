@@ -10,23 +10,34 @@ const COLOR_OPTIONS: { key: Habit["color"]; label: string; swatch: string }[] = 
   { key: "sage", label: "Sage", swatch: "#8FCB9B" },
 ];
 
+export type HabitFormInput = {
+  name: string;
+  emoji: string;
+  color: Habit["color"];
+  reminderTime: string; // "" berarti tanpa jam
+};
+
 export default function AddHabitModal({
   onClose,
-  onCreate,
+  onSubmit,
+  initial,
 }: {
   onClose: () => void;
-  onCreate: (input: { name: string; emoji: string; color: Habit["color"] }) => Promise<void>;
+  onSubmit: (input: HabitFormInput) => Promise<void>;
+  initial?: Habit;
 }) {
-  const [name, setName] = useState("");
-  const [emoji, setEmoji] = useState(EMOJI_OPTIONS[0]);
-  const [color, setColor] = useState<Habit["color"]>("gold");
+  const isEdit = !!initial;
+  const [name, setName] = useState(initial?.name ?? "");
+  const [emoji, setEmoji] = useState(initial?.emoji ?? EMOJI_OPTIONS[0]);
+  const [color, setColor] = useState<Habit["color"]>(initial?.color ?? "gold");
+  const [reminderTime, setReminderTime] = useState(initial?.reminderTime ?? "");
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || saving) return;
     setSaving(true);
-    await onCreate({ name, emoji, color });
+    await onSubmit({ name, emoji, color, reminderTime });
     setSaving(false);
   }
 
@@ -38,9 +49,11 @@ export default function AddHabitModal({
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className="w-full sm:max-w-sm bg-ink-800 border border-ink-600 rounded-2xl p-5 animate-rise-in"
+        className="w-full sm:max-w-sm bg-ink-800 border border-ink-600 rounded-2xl p-5 animate-rise-in max-h-[90vh] overflow-y-auto"
       >
-        <h2 className="font-display text-xl text-parchment mb-4">Kebiasaan baru</h2>
+        <h2 className="font-display text-xl text-parchment mb-4">
+          {isEdit ? "Ubah kebiasaan" : "Kebiasaan baru"}
+        </h2>
 
         <label className="block text-xs uppercase tracking-wider text-parchment-dim mb-1.5">
           Nama
@@ -52,6 +65,27 @@ export default function AddHabitModal({
           placeholder="Misalnya: Minum air putih"
           className="w-full bg-ink-700 border border-ink-600 rounded-lg px-3 py-2 text-parchment placeholder:text-parchment-dim/60 mb-4 focus:border-gold outline-none"
         />
+
+        <label className="block text-xs uppercase tracking-wider text-parchment-dim mb-1.5">
+          Jam dilakukan <span className="normal-case text-parchment-dim/60">(opsional)</span>
+        </label>
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            type="time"
+            value={reminderTime}
+            onChange={(e) => setReminderTime(e.target.value)}
+            className="bg-ink-700 border border-ink-600 rounded-lg px-3 py-2 text-parchment focus:border-gold outline-none [color-scheme:dark]"
+          />
+          {reminderTime && (
+            <button
+              type="button"
+              onClick={() => setReminderTime("")}
+              className="text-xs text-parchment-dim hover:text-ember"
+            >
+              Hapus jam
+            </button>
+          )}
+        </div>
 
         <label className="block text-xs uppercase tracking-wider text-parchment-dim mb-1.5">
           Simbol
@@ -103,7 +137,7 @@ export default function AddHabitModal({
             disabled={!name.trim() || saving}
             className="flex-1 py-2.5 rounded-lg bg-gold text-ink-900 font-medium text-sm disabled:opacity-50"
           >
-            {saving ? "Menyimpan…" : "Tambahkan"}
+            {saving ? "Menyimpan…" : isEdit ? "Simpan perubahan" : "Tambahkan"}
           </button>
         </div>
       </form>
