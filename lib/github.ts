@@ -12,13 +12,18 @@ export type Habit = {
   color: "gold" | "ember" | "sage";
   createdAt: string;
   archived?: boolean;
-  logs: Record<string, boolean>; // "YYYY-MM-DD" -> completed
+  reminderTime?: string; // "HH:mm" — jam kebiasaan ini sebaiknya dilakukan
+  logs: Record<string, string>; // "YYYY-MM-DD" -> waktu ISO saat ditandai selesai
 };
+
+export type NoteCategory = "umum" | "ide" | "refleksi" | "tugas";
+export const NOTE_CATEGORIES: NoteCategory[] = ["umum", "ide", "refleksi", "tugas"];
 
 export type Note = {
   id: string;
   title: string;
   content: string;
+  category: NoteCategory;
   createdAt: string;
   updatedAt: string;
 };
