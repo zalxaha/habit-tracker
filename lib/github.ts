@@ -13,16 +13,27 @@ export type Habit = {
   createdAt: string;
   archived?: boolean;
   reminderTime?: string; // "HH:mm" — jam kebiasaan ini sebaiknya dilakukan
+  schedule?: number[]; // hari dalam seminggu (0=Minggu..6=Sabtu); kosong/absen = tiap hari
+  targetCount?: number; // target jumlah hari total yang ingin dicapai
   logs: Record<string, string>; // "YYYY-MM-DD" -> waktu ISO saat ditandai selesai
 };
 
 export type NoteCategory = "umum" | "ide" | "refleksi" | "tugas";
 export const NOTE_CATEGORIES: NoteCategory[] = ["umum", "ide", "refleksi", "tugas"];
 
+export type NoteType = "text" | "table";
+
+export type NoteTable = {
+  columns: string[];
+  rows: string[][];
+};
+
 export type Note = {
   id: string;
   title: string;
-  content: string;
+  type: NoteType;
+  content: string; // dipakai saat type "text"
+  table?: NoteTable; // dipakai saat type "table"
   category: NoteCategory;
   createdAt: string;
   updatedAt: string;
