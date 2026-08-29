@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeData, Note } from "@/lib/github";
+import { writeData, Note, NOTE_CATEGORIES, NoteCategory } from "@/lib/github";
 
 export const dynamic = "force-dynamic";
 
@@ -7,10 +7,16 @@ function newId() {
   return `nt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeCategory(value: unknown): NoteCategory | null {
+  return typeof value === "string" && NOTE_CATEGORIES.includes(value as NoteCategory)
+    ? (value as NoteCategory)
+    : null;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, content } = body;
+    const { title, content, category } = body;
     if (!title || typeof title !== "string" || !title.trim()) {
       return NextResponse.json({ error: "Judul catatan wajib diisi." }, { status: 400 });
     }
@@ -20,6 +26,7 @@ export async function POST(req: Request) {
       id: newId(),
       title: title.trim(),
       content: typeof content === "string" ? content : "",
+      category: normalizeCategory(category) || "umum",
       createdAt: now,
       updatedAt: now,
     };
@@ -38,7 +45,7 @@ export async function POST(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { id, title, content } = body;
+    const { id, title, content, category } = body;
     if (!id) {
       return NextResponse.json({ error: "id wajib diisi." }, { status: 400 });
     }
@@ -51,6 +58,7 @@ export async function PATCH(req: Request) {
               ...n,
               title: typeof title === "string" && title.trim() ? title.trim() : n.title,
               content: typeof content === "string" ? content : n.content,
+              category: normalizeCategory(category) || n.category,
               updatedAt: new Date().toISOString(),
             }
           : n
