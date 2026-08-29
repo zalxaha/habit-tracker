@@ -5,6 +5,24 @@ menjadi satu titik cahaya yang tersambung jadi rasi bintang. Tidak ada
 database — semua data (kebiasaan, riwayat harian, catatan) disimpan sebagai
 satu file JSON di dalam repo GitHub-mu sendiri, lewat GitHub Contents API.
 
+**Kebiasaan**: klik tombol centang bulat untuk menandai hari ini selesai —
+langsung menambah hitungan "beruntun" dan "total". Setiap tanda tercatat
+lengkap dengan tanggal dan jam saat disimpan. Tiap kebiasaan bisa diberi:
+- **Jadwal**: hari-hari tertentu dalam seminggu (misalnya cuma Senin/Rabu/
+  Jumat) — hari di luar jadwal ditandai redup di garis waktu dan tidak
+  memutus hitungan "beruntun" kalau dilewati
+- **Jam dilakukan** (opsional)
+- **Target hari** (opsional) — muncul sebagai progress bar menuju target itu
+
+**Catatan**: setiap catatan punya kategori berwarna (Umum, Ide, Refleksi,
+Tugas) sebagai pembeda antar poin, bisa difilter lewat chip di atas, dan
+dikelompokkan otomatis per kategori saat menampilkan semua. Catatan juga
+bisa dibuat dalam mode **Tabel** (kolom & baris bebas — cocok untuk catatan
+pengeluaran atau daftar apa pun), bukan cuma teks bebas. Tiap catatan punya
+tombol **Lihat penuh** yang membuka tampilan satu layar penuh berisi seluruh
+isi catatan (teks lengkap atau tabel lengkap), lengkap dengan tombol ubah/
+hapus di sana.
+
 Sudah lengkap sebagai PWA: bisa dipasang ke home screen (Android/desktop
 lewat tombol "Pasang aplikasi", iOS lewat Share → Add to Home Screen), punya
 ikon di semua ukuran standar, dan tetap bisa dibuka (mode baca, versi
