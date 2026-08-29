@@ -9,10 +9,25 @@ function newId() {
   return `hb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeSchedule(value: unknown): number[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const days = value
+    .filter((v) => typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= 6)
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .sort((a, b) => a - b);
+  return days.length > 0 ? days : undefined;
+}
+
+function normalizeTarget(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+  const n = Math.floor(value);
+  return n > 0 ? n : undefined;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, emoji, color, reminderTime } = body;
+    const { name, emoji, color, reminderTime, schedule, targetCount } = body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json({ error: "Nama kebiasaan wajib diisi." }, { status: 400 });
     }
@@ -24,6 +39,8 @@ export async function POST(req: Request) {
       color: ["gold", "ember", "sage"].includes(color) ? color : "gold",
       createdAt: new Date().toISOString(),
       reminderTime: typeof reminderTime === "string" && TIME_RE.test(reminderTime) ? reminderTime : undefined,
+      schedule: normalizeSchedule(schedule),
+      targetCount: normalizeTarget(targetCount),
       logs: {},
     };
 
@@ -66,12 +83,17 @@ export async function PATCH(req: Request) {
                 : undefined
               : h.reminderTime;
 
+          const nextSchedule = "schedule" in body ? normalizeSchedule(body.schedule) : h.schedule;
+          const nextTarget = "targetCount" in body ? normalizeTarget(body.targetCount) : h.targetCount;
+
           return {
             ...h,
             name: typeof body.name === "string" && body.name.trim() ? body.name.trim() : h.name,
             emoji: typeof body.emoji === "string" && body.emoji ? body.emoji : h.emoji,
             color: ["gold", "ember", "sage"].includes(body.color) ? body.color : h.color,
             reminderTime: nextReminder,
+            schedule: nextSchedule,
+            targetCount: nextTarget,
           };
         }
 
