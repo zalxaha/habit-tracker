@@ -3,6 +3,8 @@ import { writeData, Habit } from "@/lib/github";
 
 export const dynamic = "force-dynamic";
 
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 function newId() {
   return `hb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -10,7 +12,7 @@ function newId() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, emoji, color } = body;
+    const { name, emoji, color, reminderTime } = body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json({ error: "Nama kebiasaan wajib diisi." }, { status: 400 });
     }
@@ -21,6 +23,7 @@ export async function POST(req: Request) {
       emoji: emoji || "✦",
       color: ["gold", "ember", "sage"].includes(color) ? color : "gold",
       createdAt: new Date().toISOString(),
+      reminderTime: typeof reminderTime === "string" && TIME_RE.test(reminderTime) ? reminderTime : undefined,
       logs: {},
     };
 
@@ -51,16 +54,24 @@ export async function PATCH(req: Request) {
           const date: string = body.date;
           const logs = { ...h.logs };
           if (logs[date]) delete logs[date];
-          else logs[date] = true;
+          else logs[date] = new Date().toISOString();
           return { ...h, logs };
         }
 
         if (action === "edit") {
+          const nextReminder =
+            "reminderTime" in body
+              ? typeof body.reminderTime === "string" && TIME_RE.test(body.reminderTime)
+                ? body.reminderTime
+                : undefined
+              : h.reminderTime;
+
           return {
             ...h,
             name: typeof body.name === "string" && body.name.trim() ? body.name.trim() : h.name,
             emoji: typeof body.emoji === "string" && body.emoji ? body.emoji : h.emoji,
             color: ["gold", "ember", "sage"].includes(body.color) ? body.color : h.color,
+            reminderTime: nextReminder,
           };
         }
 
