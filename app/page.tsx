@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { StarlogData, Habit } from "@/lib/github";
+import type { StarlogData, Habit, NoteCategory } from "@/lib/github";
 import HabitConstellation from "@/components/HabitConstellation";
-import AddHabitModal from "@/components/AddHabitModal";
+import AddHabitModal, { HabitFormInput } from "@/components/AddHabitModal";
 import NotesSection from "@/components/NotesSection";
 
 type SyncState = "idle" | "loading" | "saving" | "saved" | "error";
@@ -14,6 +14,7 @@ export default function Home() {
   const [sync, setSync] = useState<SyncState>("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showAddHabit, setShowAddHabit] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
   const load = useCallback(async () => {
     setSync("loading");
@@ -39,13 +40,18 @@ export default function Home() {
     setTimeout(() => setSync((s) => (s === "saved" ? "idle" : s)), 1500);
   }
 
-  async function createHabit(input: { name: string; emoji: string; color: Habit["color"] }) {
+  async function createHabit(input: HabitFormInput) {
     setSync("saving");
     try {
       const res = await fetch("/api/habits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify({
+          name: input.name,
+          emoji: input.emoji,
+          color: input.color,
+          reminderTime: input.reminderTime || undefined,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
@@ -58,17 +64,44 @@ export default function Home() {
     }
   }
 
+  async function editHabit(id: string, input: HabitFormInput) {
+    setSync("saving");
+    try {
+      const res = await fetch("/api/habits", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          action: "edit",
+          name: input.name,
+          emoji: input.emoji,
+          color: input.color,
+          reminderTime: input.reminderTime, // "" berarti hapus jam
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      setData(json.data);
+      setEditingHabit(null);
+      flashSaved();
+    } catch (err: any) {
+      setErrorMsg(err.message);
+      setSync("error");
+    }
+  }
+
   async function toggleLog(habitId: string, date: string) {
     if (!data) return;
     // optimistic update
     const prev = data;
+    const nowIso = new Date().toISOString();
     setData({
       ...data,
       habits: data.habits.map((h) => {
         if (h.id !== habitId) return h;
         const logs = { ...h.logs };
         if (logs[date]) delete logs[date];
-        else logs[date] = true;
+        else logs[date] = nowIso;
         return { ...h, logs };
       }),
     });
@@ -112,13 +145,13 @@ export default function Home() {
     }
   }
 
-  async function createNote(title: string, content: string) {
+  async function createNote(title: string, content: string, category: NoteCategory) {
     setSync("saving");
     try {
       const res = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content }),
+        body: JSON.stringify({ title, content, category }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
@@ -130,13 +163,13 @@ export default function Home() {
     }
   }
 
-  async function updateNote(id: string, title: string, content: string) {
+  async function updateNote(id: string, title: string, content: string, category: NoteCategory) {
     setSync("saving");
     try {
       const res = await fetch("/api/notes", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, title, content }),
+        body: JSON.stringify({ id, title, content, category }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
@@ -236,14 +269,13 @@ export default function Home() {
               </p>
             )}
             {activeHabits.map((h) => (
-              <div key={h.id} className="group relative rounded-xl border border-ink-600 bg-ink-800/60 px-4 py-3">
-                <HabitConstellation habit={h} onToggle={(date) => toggleLog(h.id, date)} />
-                <button
-                  onClick={() => deleteHabit(h.id)}
-                  className="absolute top-2 right-2 text-[10px] text-parchment-dim/0 group-hover:text-parchment-dim/70 hover:!text-ember transition-colors"
-                >
-                  hapus
-                </button>
+              <div key={h.id} className="rounded-xl border border-ink-600 bg-ink-800/60 px-4 py-3">
+                <HabitConstellation
+                  habit={h}
+                  onToggle={(date) => toggleLog(h.id, date)}
+                  onEdit={() => setEditingHabit(h)}
+                  onDelete={() => deleteHabit(h.id)}
+                />
               </div>
             ))}
 
@@ -267,7 +299,15 @@ export default function Home() {
       </div>
 
       {showAddHabit && (
-        <AddHabitModal onClose={() => setShowAddHabit(false)} onCreate={createHabit} />
+        <AddHabitModal onClose={() => setShowAddHabit(false)} onSubmit={createHabit} />
+      )}
+
+      {editingHabit && (
+        <AddHabitModal
+          initial={editingHabit}
+          onClose={() => setEditingHabit(null)}
+          onSubmit={(input) => editHabit(editingHabit.id, input)}
+        />
       )}
     </main>
   );
