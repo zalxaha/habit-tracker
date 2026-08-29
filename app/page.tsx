@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { StarlogData, Habit, NoteCategory } from "@/lib/github";
+import type { StarlogData, Habit, NoteCategory, NoteType, NoteTable } from "@/lib/github";
 import HabitConstellation from "@/components/HabitConstellation";
 import AddHabitModal, { HabitFormInput } from "@/components/AddHabitModal";
 import NotesSection from "@/components/NotesSection";
@@ -51,6 +51,8 @@ export default function Home() {
           emoji: input.emoji,
           color: input.color,
           reminderTime: input.reminderTime || undefined,
+          schedule: input.schedule,
+          targetCount: input.targetCount ? Number(input.targetCount) : undefined,
         }),
       });
       const json = await res.json();
@@ -77,6 +79,8 @@ export default function Home() {
           emoji: input.emoji,
           color: input.color,
           reminderTime: input.reminderTime, // "" berarti hapus jam
+          schedule: input.schedule, // [] berarti tiap hari
+          targetCount: input.targetCount ? Number(input.targetCount) : undefined,
         }),
       });
       const json = await res.json();
@@ -145,13 +149,19 @@ export default function Home() {
     }
   }
 
-  async function createNote(title: string, content: string, category: NoteCategory) {
+  async function createNote(
+    title: string,
+    content: string,
+    category: NoteCategory,
+    type: NoteType,
+    table?: NoteTable
+  ) {
     setSync("saving");
     try {
       const res = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, content, category }),
+        body: JSON.stringify({ title, content, category, type, table }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
@@ -163,13 +173,20 @@ export default function Home() {
     }
   }
 
-  async function updateNote(id: string, title: string, content: string, category: NoteCategory) {
+  async function updateNote(
+    id: string,
+    title: string,
+    content: string,
+    category: NoteCategory,
+    type: NoteType,
+    table?: NoteTable
+  ) {
     setSync("saving");
     try {
       const res = await fetch("/api/notes", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, title, content, category }),
+        body: JSON.stringify({ id, title, content, category, type, table }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
