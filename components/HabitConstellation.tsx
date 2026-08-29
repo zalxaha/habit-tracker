@@ -1,6 +1,7 @@
 "use client";
 
 import type { Habit } from "@/lib/github";
+import ConfirmButton from "@/components/ConfirmButton";
 
 const COLOR_MAP: Record<Habit["color"], { fill: string; glow: string; dim: string }> = {
   gold: { fill: "#F2C879", glow: "rgba(242,200,121,0.55)", dim: "#4A4530" },
@@ -200,14 +201,12 @@ export default function HabitConstellation({
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-1 shrink-0">
+        <div className="flex flex-col items-end gap-1 shrink-0 min-w-[92px]">
           <div className="flex items-center gap-2">
             <button onClick={onEdit} className="text-[11px] text-parchment-dim hover:text-gold">
               ubah
             </button>
-            <button onClick={onDelete} className="text-[11px] text-parchment-dim hover:text-ember">
-              hapus
-            </button>
+            <ConfirmButton label="hapus" className="text-[11px] text-parchment-dim hover:text-ember" onConfirm={onDelete} />
           </div>
           <div className="flex items-center gap-2 font-mono text-xs">
             <span style={{ color: colors.fill }}>{streak}</span>

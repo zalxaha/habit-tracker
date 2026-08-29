@@ -3,6 +3,7 @@
 import type { Note } from "@/lib/github";
 import CategoryBadge from "@/components/CategoryBadge";
 import NoteTableView from "@/components/NoteTableView";
+import ConfirmButton from "@/components/ConfirmButton";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -35,13 +36,15 @@ export default function NoteFullView({
           </svg>
           Tutup
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
           <button onClick={onEdit} className="text-sm text-parchment-dim hover:text-gold">
             Ubah
           </button>
-          <button onClick={onDelete} className="text-sm text-parchment-dim hover:text-ember">
-            Hapus
-          </button>
+          <ConfirmButton
+            label="Hapus"
+            className="text-sm text-parchment-dim hover:text-ember"
+            onConfirm={onDelete}
+          />
         </div>
       </div>
 

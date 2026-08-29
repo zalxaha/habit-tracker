@@ -7,6 +7,7 @@ import CategoryBadge, { CATEGORY_META } from "@/components/CategoryBadge";
 import NoteTableEditor from "@/components/NoteTableEditor";
 import NoteTableView from "@/components/NoteTableView";
 import NoteFullView from "@/components/NoteFullView";
+import ConfirmButton from "@/components/ConfirmButton";
 
 const DEFAULT_TABLE: NoteTable = {
   columns: ["Tanggal", "Keterangan", "Jumlah"],
@@ -339,19 +340,18 @@ export default function NotesSection({
                       <>
                         <div className="flex items-start justify-between gap-3 mb-1">
                           <h3 className="font-display text-lg text-parchment break-words">{n.title}</h3>
-                          <div className="flex gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex gap-2 shrink-0">
                             <button
                               onClick={() => startEdit(n)}
                               className="text-xs text-parchment-dim hover:text-gold"
                             >
                               Ubah
                             </button>
-                            <button
-                              onClick={() => handleDelete(n.id)}
+                            <ConfirmButton
+                              label="Hapus"
                               className="text-xs text-parchment-dim hover:text-ember"
-                            >
-                              Hapus
-                            </button>
+                              onConfirm={() => handleDelete(n.id)}
+                            />
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mb-2">
