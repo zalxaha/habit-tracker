@@ -8,6 +8,17 @@ const COLOR_MAP: Record<Habit["color"], { fill: string; glow: string; dim: strin
   sage: { fill: "#8FCB9B", glow: "rgba(143,203,155,0.5)", dim: "#33452F" },
 };
 
+const WEEKDAY_LABELS: Record<number, string> = {
+  0: "Min",
+  1: "Sen",
+  2: "Sel",
+  3: "Rab",
+  4: "Kam",
+  5: "Jum",
+  6: "Sab",
+};
+const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
 function toKey(d: Date) {
   return d.toISOString().slice(0, 10);
 }
@@ -23,15 +34,32 @@ function jitter(seed: string, range: number) {
   return (normalized - 0.5) * range;
 }
 
-function computeStreak(logs: Record<string, string>) {
-  let streak = 0;
+function isScheduledDay(habit: Habit, date: Date) {
+  if (!habit.schedule || habit.schedule.length === 0) return true;
+  return habit.schedule.includes(date.getDay());
+}
+
+function computeStreak(habit: Habit) {
   const cursor = new Date();
   cursor.setHours(0, 0, 0, 0);
-  if (!logs[toKey(cursor)]) {
+
+  // Hari ini boleh belum ditandai tanpa memutus streak — asal memang
+  // hari terjadwal, mundur satu hari dulu sebelum mulai menghitung.
+  if (isScheduledDay(habit, cursor) && !habit.logs[toKey(cursor)]) {
     cursor.setDate(cursor.getDate() - 1);
   }
-  while (logs[toKey(cursor)]) {
-    streak += 1;
+
+  let streak = 0;
+  let guard = 0;
+  while (guard < 3660) {
+    guard += 1;
+    if (isScheduledDay(habit, cursor)) {
+      if (habit.logs[toKey(cursor)]) {
+        streak += 1;
+      } else {
+        break;
+      }
+    }
     cursor.setDate(cursor.getDate() - 1);
   }
   return streak;
@@ -66,12 +94,21 @@ export default function HabitConstellation({
   onDelete: () => void;
 }) {
   const colors = COLOR_MAP[habit.color] || COLOR_MAP.gold;
-  const streak = computeStreak(habit.logs);
+  const streak = computeStreak(habit);
   const total = Object.keys(habit.logs).length;
   const lastEntry = lastLoggedEntry(habit.logs);
 
   const todayKey = toKey(new Date());
   const doneToday = !!habit.logs[todayKey];
+
+  const scheduleLabel =
+    habit.schedule && habit.schedule.length > 0
+      ? WEEKDAY_ORDER.filter((d) => habit.schedule!.includes(d))
+          .map((d) => WEEKDAY_LABELS[d])
+          .join(", ")
+      : null;
+
+  const progress = habit.targetCount ? Math.min(total / habit.targetCount, 1) : null;
 
   const dates: Date[] = [];
   for (let i = days - 1; i >= 0; i--) {
@@ -91,7 +128,7 @@ export default function HabitConstellation({
     const key = toKey(d);
     const x = marginX + i * spacing;
     const y = baseY + jitter(key + habit.id, 22);
-    return { key, x, y, done: !!habit.logs[key], date: d };
+    return { key, x, y, done: !!habit.logs[key], scheduled: isScheduledDay(habit, d), date: d };
   });
 
   const segments: { x1: number; y1: number; x2: number; y2: number }[] = [];
@@ -147,9 +184,15 @@ export default function HabitConstellation({
                   {habit.reminderTime}
                 </span>
               )}
-              {lastEntry && (
+              {scheduleLabel && (
                 <span>
                   {habit.reminderTime && "· "}
+                  {scheduleLabel}
+                </span>
+              )}
+              {lastEntry && (
+                <span>
+                  {(habit.reminderTime || scheduleLabel) && "· "}
                   Dicatat {formatSavedAt(lastEntry.at)}
                 </span>
               )}
@@ -176,6 +219,20 @@ export default function HabitConstellation({
         </div>
       </div>
 
+      {progress !== null && (
+        <div className="flex items-center gap-2 mb-2 px-1">
+          <div className="flex-1 h-1.5 rounded-full bg-ink-600 overflow-hidden">
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${progress * 100}%`, backgroundColor: colors.fill }}
+            />
+          </div>
+          <span className="font-mono text-[10px] text-parchment-dim shrink-0">
+            {total}/{habit.targetCount}
+          </span>
+        </div>
+      )}
+
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="w-full h-14 overflow-visible"
@@ -201,7 +258,7 @@ export default function HabitConstellation({
               key={p.key}
               onClick={() => onToggle(p.key)}
               className="cursor-pointer"
-              style={{ pointerEvents: "auto" }}
+              style={{ pointerEvents: "auto", opacity: !p.scheduled && !p.done ? 0.35 : 1 }}
             >
               <circle cx={p.x} cy={p.y} r={12} fill="transparent" />
               {p.done && (
@@ -221,6 +278,7 @@ export default function HabitConstellation({
                 fill={p.done ? colors.fill : "none"}
                 stroke={p.done ? "none" : colors.dim}
                 strokeWidth={1}
+                strokeDasharray={!p.scheduled && !p.done ? "2 2" : undefined}
               />
               {isToday && (
                 <circle
